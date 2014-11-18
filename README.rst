@@ -4,10 +4,6 @@ JFinal LDAP Plugin
 
     JFinal的LDAP(轻量目录服务)访问拓展，常用的:用户认证、筛选、变更、删除操作等。;)
 
-JFinal-Ldap有如下主要特点
-------------------------
-#. LdapKit + Entry模式，灵活便利
-
 **以下是JFinal-Ldap的示例：**
 
 **1. 配置(JFinalConfig) **
