@@ -4,9 +4,10 @@ JFinal LDAP Plugin
 
     JFinal的LDAP(轻量目录服务)访问拓展，常用的:用户认证、筛选、变更、删除操作等。;)
 
+
 **以下是JFinal-Ldap的示例：**
 
-**1. 配置(JFinalConfig) **
+**1. 配置(JFinalConfig)**
 
 :: 
  
@@ -18,7 +19,8 @@ JFinal LDAP Plugin
 	me.add(ldapPlugin);
     }
 
-**2. 配置 Lable **
+
+**2. 配置 Lable**
 :: 
   
      public class Person extends Lable<Person>{
@@ -55,4 +57,4 @@ JFinal LDAP Plugin
      ｝
 
 
-** 未解决 jstl取值，需重写 Render 或组织 Controller
+**未解决 jstl取值，需重写 Render 或组织 Controller**
