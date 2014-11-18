@@ -10,7 +10,7 @@ JFinal-Ldap有如下主要特点
 
 **以下是JFinal-Ldap的示例：**
 
-**1. 配置(JFinalConfig) **
+**1. 配置(JFinalConfig)**
 
 :: 
  
@@ -22,7 +22,7 @@ JFinal-Ldap有如下主要特点
 	me.add(ldapPlugin);
     }
 
-**2. 配置 Lable **
+**2. 配置 Lable**
 :: 
   
      public class Person extends Lable<Person>{
@@ -59,4 +59,4 @@ JFinal-Ldap有如下主要特点
      ｝
 
 
-** 未解决 jstl取值，需重写 Render 或组织 Controller
+** 未解决 jstl取值，需重写 Render 或组织 Controller**
