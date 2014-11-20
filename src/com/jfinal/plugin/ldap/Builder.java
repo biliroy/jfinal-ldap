@@ -8,9 +8,16 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.LdapName;
 
-public class Builder {
+public abstract class Builder {
 	
-	public static void setupAttrs(Attributes attrs, Map<String, Object> attrMap, String name ){
+	/** full dn */
+	public static final String NS_FULL = "fullDN";
+	/** simple dn */
+	public static final String NS_SIMPLE = "simpleDN";
+	/** parent dn */
+	public static final String NS_PARENT = "parentDN";
+	
+	protected static void setupAttrs(Attributes attrs, Map<String, Object> attrMap, String name ){
 		List<Object> values = new ArrayList<Object>();
 		try{
 			LdapKit.collectAttributeValues(attrs, name, values);
@@ -26,17 +33,17 @@ public class Builder {
 	}
 	
 	/**
-	 * setup fullName, simpleName, parentName into attrMap
+	 * setup fullDN, simpleDN, parentDN into attrMap 
 	 * @param attrMap
 	 * @param searchResult
 	 * @throws Exception
 	 */
-	public static void setupNames(Map<String, Object> attrMap, SearchResult searchResult) throws Exception{
+	protected static void setupNames(Map<String, Object> attrMap, SearchResult searchResult) throws Exception{
 		String fullDN = searchResult.getNameInNamespace();
-		attrMap.put(LableAware.NS_FULL, fullDN);
+		attrMap.put(NS_FULL, fullDN);
 		LdapName ldapName = LdapKit.newLdapName(fullDN);
 		ldapName.remove(ldapName.getRdns().size()-1);
-		attrMap.put(LableAware.NS_PARENT, ldapName.toString());
-		attrMap.put(LableAware.NS_SIMPLE, searchResult.getName());
+		attrMap.put(NS_PARENT, ldapName.toString());
+		attrMap.put(NS_SIMPLE, searchResult.getName());
 	}
 }

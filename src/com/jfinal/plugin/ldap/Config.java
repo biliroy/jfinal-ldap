@@ -14,9 +14,7 @@ public class Config {
 	private String userDn;
 	private String principal;
 	
-	private Hashtable<String, Object> baseEnv = new Hashtable<String, Object>();
-	
-	public static final String SUN_LDAP_POOLING_FLAG = "com.sun.jndi.ldap.connect.pool";
+	public static final String SUN_LDAP_POOLING_CONNECT = "com.sun.jndi.ldap.connect.pool";
 	public static final String DEFAULT_LDAP_CTX_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
 	public static final String DEFAULT_AUTHENTICATION_TYPE = "simple";
 	
@@ -84,14 +82,6 @@ public class Config {
 			throw new LdapPluginException(e);
 		}
 	}
-	
-	private Hashtable<String, Object> setupSimpleDirContextEnv() {
-		Hashtable<String, Object> env = new Hashtable<String, Object>(baseEnv);
-		env.put(Context.INITIAL_CONTEXT_FACTORY, DEFAULT_LDAP_CTX_FACTORY);
-		env.put(Context.SECURITY_AUTHENTICATION, DEFAULT_AUTHENTICATION_TYPE);
-		env.put(Context.PROVIDER_URL, ldapUrl + base);
-		return env;
-	}
 	 
 	protected DirContext doGetContext(String principal, String credentials){
 		Hashtable<String, Object> env = setupSimpleDirContextEnv();
@@ -99,6 +89,14 @@ public class Config {
 		env.put(Context.SECURITY_CREDENTIALS, credentials);
 	    DirContext ctx = createContext(env);
 	    return ctx;
+	}
+	
+	private Hashtable<String, Object> setupSimpleDirContextEnv() {
+		Hashtable<String, Object> env = new Hashtable<String, Object>();
+		env.put(Context.INITIAL_CONTEXT_FACTORY, DEFAULT_LDAP_CTX_FACTORY);
+		env.put(Context.SECURITY_AUTHENTICATION, DEFAULT_AUTHENTICATION_TYPE);
+		env.put(Context.PROVIDER_URL, ldapUrl + base);
+		return env;
 	}
 	
 }

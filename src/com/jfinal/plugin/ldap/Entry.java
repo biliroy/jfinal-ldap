@@ -75,15 +75,15 @@ public class Entry implements Serializable{
 	}
 	
 	public String getFdn(){
-		return getStr(LableAware.NS_FULL);
+		return getStr(Builder.NS_FULL);
 	}
 	
 	public String getSdn(){
-		return getStr(LableAware.NS_SIMPLE);
+		return getStr(Builder.NS_SIMPLE);
 	}
 	
 	public String getPdn(){
-		return getStr(LableAware.NS_PARENT);
+		return getStr(Builder.NS_PARENT);
 	}
 	
 	public String toString() {

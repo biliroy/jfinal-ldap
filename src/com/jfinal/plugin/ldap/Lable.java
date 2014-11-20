@@ -35,8 +35,12 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 		this.attributes = attributes;
 	}
 	
-	private Config getConfig() {
+	protected Config getConfig() {
 		return LdapKit.getConfig();
+	}
+	
+	private DirContext getContext() {
+		return getConfig().getCtx();
 	}
 	
 	private Set<String> modifyFlag = new HashSet<String>();
@@ -47,7 +51,7 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 	}
 	
 	public M set(String attr, Object value) {
-		if (hasAttribute(attr)) {
+		if (containsAttr(attr)) {
 			attrs.put(attr, value);
 			getModifyFlag().add(attr);
 			return (M)this;
@@ -65,15 +69,15 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 	}
 	
 	public String getFdn(){
-		return getStr(NS_FULL);
+		return getStr(Builder.NS_FULL);
 	}
 	
 	public String getSdn(){
-		return getStr(NS_SIMPLE);
+		return getStr(Builder.NS_SIMPLE);
 	}
 	
 	public String getPdn(){
-		return getStr(NS_PARENT);
+		return getStr(Builder.NS_PARENT);
 	}
 	
 	
@@ -204,9 +208,9 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 		if (mods.length <= 0) {	// Needn't update
 			return false;
 		}
-		DirContext context = getConfig().getCtx();
+		DirContext context = getContext();
 		try {
-			context.modifyAttributes(getStr(LableAware.NS_SIMPLE)+"," + baseDN(), mods);
+			context.modifyAttributes(getSdn() + "," + baseDN(), mods);
 		} catch (javax.naming.NamingException ex) {
 			throw new LdapPluginException(ex);
 		}finally{
@@ -223,7 +227,7 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 	public void rename(String newDN){
 		DirContext ctx = null;
 		try{
-			ctx = getConfig().getCtx();
+			ctx = getContext();
 			ctx.rename(getFdn(), newDN);
 		}catch(Exception e){
 			throw new LdapPluginException(e);
@@ -234,8 +238,9 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 	
 	public List<M> find(Filter filter)throws Exception{
 		NamingEnumeration<SearchResult> ne = null;
-		DirContext context = getConfig().getCtx();
+		DirContext context = null;
 		try {
+			context = getContext();
 			ne = context.search(baseDN(), filter.encode(), searchAttributes(), searchControls());
 		} catch (javax.naming.NamingException ex) {
 			throw new LdapPluginException(ex);
@@ -245,7 +250,7 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 		return LableBuilder.build(ne, this.getClass());
 	}
 	
-	private boolean hasAttribute(String attr){
+	private boolean containsAttr(String attr){
 		if(searchAttributes()!=null){
 			return Arrays.asList(searchAttributes()).contains(attr);
 		}
@@ -256,8 +261,8 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 	public boolean delete(){
 		DirContext ctx = null;
 		try{
-			ctx = getConfig().getCtx();
-			ctx.unbind(getStr(LableAware.NS_FULL));
+			ctx = getContext();
+			ctx.unbind(getFdn());
 			return true;
 		}catch(Exception e){
 			throw new LdapPluginException(e);
@@ -267,7 +272,7 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 	}
 	
 	public boolean save(){
-		DirContext context = getConfig().getCtx();
+		DirContext context = null;
 		for(String attr : requiredAttributes()){
 			Object o = get(attr);
 			if(o==null){
@@ -276,6 +281,7 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 		}
 		String name = rdnKey() + "=" + getStr(rdnKey())+"," + baseDN();
 		try {
+			context = getContext();
 			context.bind(name, null, setupCreateAttributes());
 		}catch (javax.naming.NamingException ex) {
 			throw new LdapPluginException(ex);
@@ -309,7 +315,7 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 		
 		for (java.util.Map.Entry<String, Object> e : attrs.entrySet()) {
 			String colName = e.getKey();
-			if ( modifySet.contains(colName) && hasAttribute(colName)) {
+			if ( modifySet.contains(colName) && containsAttr(colName)) {
 				collectModifications(colName, tmpList);
 			}
 		}
@@ -319,36 +325,31 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 	private void collectModifications(String attrID, List<ModificationItem> modificationList){
 		Attribute currentAttribute = attributes.get(attrID);
 		Object changedValue =  attrs.get(attrID);
-		if( valueEquals(currentAttribute, changedValue)){
+		if( attributeValueEquals(currentAttribute, changedValue)){
 			// No changes
 			return ;
 		}
 		
-		/**
-		 * 旧值不为空，新值为空，删除属性操作
-		 */
-		if(currentAttribute!=null && changedValue==null || "".equals(changedValue) ){
+		if(currentAttribute!=null && (changedValue==null || "".equals(changedValue)) ){
 			ModificationItem item = new ModificationItem(DirContext.REMOVE_ATTRIBUTE, new BasicAttribute(attrID));
 			modificationList.add(item);
 		}
-		/**
-		 * 旧值为空，新值不为空，新增属性操作
-		 */
-		if(currentAttribute==null || currentAttribute.size() == 0 && changedValue!=null ){
+		
+		if((currentAttribute==null || currentAttribute.size() == 0) && changedValue!=null ){
 			if(changedValue instanceof List){
 				List<Object> updates = (List)changedValue;
 				for(Object o : updates){
-					ModificationItem item = new ModificationItem(DirContext.ADD_ATTRIBUTE, new BasicAttribute(attrID,o));
+					ModificationItem item = new ModificationItem(DirContext.ADD_ATTRIBUTE, 
+							new BasicAttribute(attrID,o));
 					modificationList.add(item);
 				}
 			}else {
-				ModificationItem item = new ModificationItem(DirContext.ADD_ATTRIBUTE, new BasicAttribute(attrID, changedValue));
+				ModificationItem item = new ModificationItem(DirContext.ADD_ATTRIBUTE, 
+						new BasicAttribute(attrID, changedValue));
 				modificationList.add(item);
 			}
 		}
-		/**
-		 * 旧值不为空，新值不为空，替换属性操作
-		 */
+		
 		if(currentAttribute!=null && changedValue!=null){
 			if(changedValue instanceof List){
 				List<Object> updates = (List)changedValue;
@@ -369,8 +370,8 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 		                    addedValuesAttribute));
 		        } else {
 		            if (originalClone.size() > 0) {
-		                modificationList.add(new ModificationItem(
-		                        DirContext.REMOVE_ATTRIBUTE, originalClone));
+		                modificationList.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, 
+		                		originalClone));
 		            }
 		            if (addedValuesAttribute.size() > 0) {
 		                modificationList.add(new ModificationItem(DirContext.ADD_ATTRIBUTE,
@@ -380,13 +381,13 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 				
 			}else if (currentAttribute != null && currentAttribute.size() == 1 ) {
 				// Replace single-vale attribute.
-				modificationList.add(new ModificationItem(
-						DirContext.REPLACE_ATTRIBUTE, new BasicAttribute(attrID, changedValue)));
+				modificationList.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, 
+						new BasicAttribute(attrID, changedValue)));
 			}
 		}
 	}
 	
-	private boolean valueEquals(Attribute attr, Object obj){
+	private boolean attributeValueEquals(Attribute attr, Object obj){
 		if(attr==null && obj==null){
 			return true;
 		}
@@ -400,4 +401,5 @@ public abstract class Lable<M extends Lable> extends LableAware implements Seria
 		}
 		return false;
 	}
+	
 }

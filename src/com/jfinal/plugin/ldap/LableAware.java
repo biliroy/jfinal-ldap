@@ -4,12 +4,7 @@ import javax.naming.directory.SearchControls;
 
 public abstract class LableAware {
 	
-	/** full dn */
-	public static final String NS_FULL = "fdn";
-	/** simple dn */
-	public static final String NS_SIMPLE = "sdn";
-	/** parent dn */
-	public static final String NS_PARENT = "pdn";
+	/** common init method */
 	
 	public abstract String baseDN();
 	public abstract String rdnKey();
@@ -17,5 +12,6 @@ public abstract class LableAware {
 	public abstract String[] requiredAttributes();
 	public abstract String[] buildObjectClasses();
 	public abstract SearchControls searchControls();
+	
 	
 }

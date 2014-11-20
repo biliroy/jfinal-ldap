@@ -42,6 +42,23 @@ public final class LdapKit {
 
 	}
 	
+	private enum AuthenticationStatus {
+		
+		SUCCESS(true),
+		EMPTYRESULT(false),
+		MANYRESULT(false),
+		UNDEFINED_FAILURE(false);
+		
+		private boolean success;
+		
+		AuthenticationStatus(boolean success) {
+			this.success = success;
+		}
+		public boolean isSuccess() {
+			return success;
+		}
+	}
+	
 	public static void addConfig(Config config) {
 		if (config == null)
 			throw new IllegalArgumentException("Config can not be null");
@@ -50,6 +67,10 @@ public final class LdapKit {
 	
 	public static Config getConfig() {
 		return config;
+	}
+	
+	public static DirContext getContext(){
+		return getConfig().getCtx();
 	}
 	
 	public static void closeContext(DirContext context) {
@@ -465,7 +486,7 @@ public final class LdapKit {
 	}
 	
 	public static void modifyAttributes(Name name, ModificationItem[] mods){
-		DirContext context = config.getCtx();
+		DirContext context = getContext();
 		try {
 			context.modifyAttributes(name, mods);
 		} catch (javax.naming.NamingException ex) {
@@ -477,11 +498,10 @@ public final class LdapKit {
 	
 	public static List<Entry> find(Name baseDN, String filter, Object[] filterArgs, SearchControls cons){
 		List<Entry> result = new ArrayList<Entry>();
-		Config config = getConfig();
 		DirContext ctx = null;
 		NamingEnumeration<SearchResult> namingResults = null;
 		try{
-			ctx = config.getCtx();
+			ctx = getContext();
 			namingResults = ctx.search(baseDN, filter, filterArgs, cons);
 			result = EntryBuilder.build(namingResults);
 		}catch(Exception e){
@@ -502,11 +522,11 @@ public final class LdapKit {
 	}
 	
 	public static List<Entry> find(String baseDN, Filter filter){
-		return find(baseDN, filter, SearchScope.ONELEVEL.getSearchControls());
+		return find(baseDN, filter, SearchScope.ONELEVEL.searchControls());
 	}
 	
 	public static boolean authenticate(String base, String filter, String password) {
-		return authenticate(LdapKit.newLdapName(base),filter,password, SearchScope.ONELEVEL.getSearchControls()).isSuccess();
+		return authenticate(LdapKit.newLdapName(base), filter, password, SearchScope.ONELEVEL.searchControls()).isSuccess();
 	}
 	
 	private static AuthenticationStatus authenticate(Name base,String filter,
@@ -534,20 +554,48 @@ public final class LdapKit {
 		}
 	}
 	
-	private enum AuthenticationStatus {
-		
-		SUCCESS(true),
-		EMPTYRESULT(false),
-		MANYRESULT(false),
-		UNDEFINED_FAILURE(false);
-		
-		private boolean success;
-		
-		AuthenticationStatus(boolean success) {
-			this.success = success;
-		}
-		public boolean isSuccess() {
-			return success;
+	public boolean create(DirContext context, String dn, Object obj, Attributes attrs){
+		try {
+			context.bind(dn, null, attrs);
+			return true;
+		}catch (javax.naming.NamingException ex) {
+			throw new LdapPluginException(ex);
+		}finally{
+			LdapKit.closeContext(context);
 		}
 	}
+	
+	public boolean create(String dn, Object obj, Attributes attrs){
+		return create(getContext(), dn, obj, attrs);
+	}
+	
+	public boolean delete(String dn){
+		DirContext context = null;
+		try {
+			context = getContext();
+			context.unbind(dn);
+			return true;
+		}catch(javax.naming.NamingException ex) {
+			throw new LdapPluginException(ex);
+		}finally{
+			LdapKit.closeContext(context);
+		}
+	}
+	
+	public boolean rename(DirContext context, String oldName, String newName){
+		try {
+			context.rename(oldName, newName);
+			return true;
+		} catch (NamingException e) {
+			throw new LdapPluginException(e);
+		}finally{
+			LdapKit.closeContext(context);
+		}
+	}
+	
+	public boolean rename(String oldName, String newName){
+		return rename(getContext(), oldName, newName);
+	}
+	
+	
 }

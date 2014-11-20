@@ -2,7 +2,6 @@ package com.jfinal.plugin.ldap;
 
 import javax.naming.directory.SearchControls;
 
-
 public enum SearchScope {
     /**
      * Corresponds to {@link SearchControls#OBJECT_SCOPE}
@@ -29,7 +28,7 @@ public enum SearchScope {
         this.searchControls = searchControls;
     }
 
-    public SearchControls getSearchControls() {
+    public SearchControls searchControls() {
         return searchControls;
     }
 }
