@@ -5,6 +5,8 @@ import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+import javax.naming.ldap.InitialLdapContext;
+import javax.naming.ldap.LdapContext;
 
 
 public class Config {
@@ -36,6 +38,28 @@ public class Config {
 	public DirContext getCtx(){
 		return doGetContext();
 	}
+	
+	public LdapContext getLdapCtx(){
+		return doGetLdapContext();
+	}
+	
+	private LdapContext doGetLdapContext() {
+		Hashtable<String, Object> env = setupDirContextEnv();
+		LdapContext ctx = createLdapContext(env);
+	    return ctx;
+	}
+
+	private LdapContext createLdapContext(Hashtable<String, Object> env) {
+		LdapContext ctx = null;
+		try{
+			ctx = new InitialLdapContext(env, null);
+			return ctx;
+		}catch (Exception e) {
+			LdapKit.closeContext(ctx);
+			throw new LdapPluginException(e);
+		}
+	}
+
 	public boolean isDevMode() {
 		return devMode;
 	}
@@ -65,9 +89,7 @@ public class Config {
 	}
 	
 	private DirContext doGetContext() {
-		Hashtable<String, Object> env = setupSimpleDirContextEnv();
-		env.put(Context.SECURITY_PRINCIPAL, userDn);
-		env.put(Context.SECURITY_CREDENTIALS, principal);
+		Hashtable<String, Object> env = setupDirContextEnv();
 	    DirContext ctx = createContext(env);
 	    return ctx;
 	}
@@ -99,4 +121,10 @@ public class Config {
 		return env;
 	}
 	
+	private Hashtable<String, Object> setupDirContextEnv() {
+		Hashtable<String, Object> env = setupSimpleDirContextEnv();
+		env.put(Context.SECURITY_PRINCIPAL, userDn);
+		env.put(Context.SECURITY_CREDENTIALS, principal);
+		return env;
+	}
 }

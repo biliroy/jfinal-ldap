@@ -2,7 +2,10 @@ package com.jfinal.plugin.ldap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import javax.naming.CompositeName;
@@ -16,14 +19,17 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.Control;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
+import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.PagedResultsResponseControl;
 import javax.naming.ldap.Rdn;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jfinal.plugin.ldap.filter.Filter;
+import com.jfinal.plugin.activerecord.Page;
 
 @SuppressWarnings("rawtypes")
 public final class LdapKit {
@@ -64,6 +70,10 @@ public final class LdapKit {
 	
 	public static DirContext getContext(){
 		return getConfig().getCtx();
+	}
+	
+	public static LdapContext getLdapContext(){
+		return getConfig().getLdapCtx();
 	}
 	
 	public static void closeContext(DirContext context) {
@@ -310,15 +320,15 @@ public final class LdapKit {
 		return result;
 	}
 	
-	public static List<Entry> find(String baseDN, Filter filter, Object[] filterArgs, SearchControls cons){
-		return find(LdapKit.newLdapName(baseDN), filter.encode(), filterArgs, cons);
+	public static List<Entry> find(String baseDN, String filter, Object[] filterArgs, SearchControls cons){
+		return find(LdapKit.newLdapName(baseDN), filter, filterArgs, cons);
 	}
 	
-	public static List<Entry> find(String baseDN, Filter filter, SearchControls cons){
+	public static List<Entry> find(String baseDN, String filter, SearchControls cons){
 		return find(baseDN, filter, null, cons);
 	}
 	
-	public static List<Entry> find(String baseDN, Filter filter){
+	public static List<Entry> find(String baseDN, String filter){
 		return find(baseDN, filter, SearchScope.ONELEVEL.searchControls());
 	}
 	
@@ -351,7 +361,7 @@ public final class LdapKit {
 		}
 	}
 	
-	public boolean create(DirContext context, String dn, Object obj, Attributes attrs){
+	public static boolean create(DirContext context, String dn, Object obj, Attributes attrs){
 		try {
 			context.bind(dn, null, attrs);
 			return true;
@@ -362,11 +372,11 @@ public final class LdapKit {
 		}
 	}
 	
-	public boolean create(String dn, Object obj, Attributes attrs){
+	public static boolean create(String dn, Object obj, Attributes attrs){
 		return create(getContext(), dn, obj, attrs);
 	}
 	
-	public boolean delete(String dn){
+	public static boolean delete(String dn){
 		DirContext context = null;
 		try {
 			context = getContext();
@@ -379,7 +389,7 @@ public final class LdapKit {
 		}
 	}
 	
-	public boolean rename(DirContext context, String oldName, String newName){
+	public static boolean rename(DirContext context, String oldName, String newName){
 		try {
 			context.rename(oldName, newName);
 			return true;
@@ -390,9 +400,65 @@ public final class LdapKit {
 		}
 	}
 	
-	public boolean rename(String oldName, String newName){
+	public static boolean rename(String oldName, String newName){
 		return rename(getContext(), oldName, newName);
 	}
 	
+	public static Page<Entry> paginate(String base, String filter,
+			int pageNumber, int pageSize){
+		return paginate(base, filter, null, SearchScope.ONELEVEL.searchControls(), pageNumber, pageSize);
+	}
+	
+	public static Page<Entry> paginate(String base, String filter, 
+			Object[] filterArgs, SearchControls cons, int pageNumber, int pageSize){
+		if (pageNumber < 1 || pageSize < 1)
+			throw new LdapPluginException("pageNumber and pageSize must be more than 0");
+		LdapContext ctx = null;
+		Map<Integer, List<Entry>> pageResult = new LinkedHashMap<Integer, List<Entry>>();
+		byte[] cookie = null;
+		//pageNumber start with 1
+	    int totalPage = 1;
+	    try{
+	    	ctx = getLdapContext();
+	    	ctx.setRequestControls(new Control[]{
+	    			new PagedResultsControl(pageSize, Control.CRITICAL)});
+	    	do{
+	    		List<Entry> entryList = new LinkedList<Entry>();
+	    		NamingEnumeration<SearchResult> results = ctx.search(base, filter, cons);
+	    		entryList = EntryBuilder.build(results);
+	    		Control[] controls = ctx.getResponseControls();
+	    		if (controls != null) {
+	    			for (int i = 0; i < controls.length; i++) {
+	    				if (controls[i] instanceof PagedResultsResponseControl) {
+		                     PagedResultsResponseControl prrc = (PagedResultsResponseControl)controls[i];
+		                     cookie = prrc.getCookie();
+		                 }else{
+		                     // Handle other response controls (if any)
+		                 }
+		             }
+		         }
+		         ctx.setRequestControls(new Control[]{
+		             new PagedResultsControl(pageSize, cookie, Control.CRITICAL)});
+		         pageResult.put(totalPage, entryList);
+		         totalPage ++;
+		     } while (cookie != null);
+	    }catch (Exception e) {
+	    	throw new LdapPluginException(e);
+		}finally{
+			LdapKit.closeContext(ctx);
+		}
+	    int totalPageSize = pageResult.keySet().size();
+	    int totalResultRow = 0;
+	    if(totalPageSize==1){
+	    	totalResultRow = pageResult.get(1).size();
+	    }else if(totalPageSize > 1){
+	    	int lastResultSize = pageResult.get(totalPageSize).size();
+	    	totalResultRow = pageSize * (totalPageSize -1) + lastResultSize; 
+	    }
+	    if(pageNumber >= totalPageSize){
+			pageNumber = totalPageSize;
+		}
+		return new Page<Entry>(pageResult.get(pageNumber), pageNumber, pageSize, totalPage, totalResultRow);
+	}
 	
 }
