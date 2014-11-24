@@ -20,9 +20,6 @@ public class Config {
 	public static final String DEFAULT_LDAP_CTX_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
 	public static final String DEFAULT_AUTHENTICATION_TYPE = "simple";
 	
-	
-	boolean devMode = false;
-	
 	public Config(){
 		
 	}
@@ -34,35 +31,7 @@ public class Config {
 		this.userDn = userDn;
 		this.principal = principal;
 	}
-	
-	public DirContext getCtx(){
-		return doGetContext();
-	}
-	
-	public LdapContext getLdapCtx(){
-		return doGetLdapContext();
-	}
-	
-	private LdapContext doGetLdapContext() {
-		Hashtable<String, Object> env = setupDirContextEnv();
-		LdapContext ctx = createLdapContext(env);
-	    return ctx;
-	}
 
-	private LdapContext createLdapContext(Hashtable<String, Object> env) {
-		LdapContext ctx = null;
-		try{
-			ctx = new InitialLdapContext(env, null);
-			return ctx;
-		}catch (Exception e) {
-			LdapKit.closeContext(ctx);
-			throw new LdapPluginException(e);
-		}
-	}
-
-	public boolean isDevMode() {
-		return devMode;
-	}
 	public String getBase() {
 		return base;
 	}
@@ -88,6 +57,32 @@ public class Config {
 		this.principal = principal;
 	}
 	
+	
+	public DirContext getCtx(){
+		return doGetContext();
+	}
+	
+	public LdapContext getLdapCtx(){
+		return doGetLdapContext();
+	}
+	
+	private LdapContext doGetLdapContext() {
+		Hashtable<String, Object> env = setupDirContextEnv();
+		LdapContext ctx = createLdapContext(env);
+	    return ctx;
+	}
+
+	private LdapContext createLdapContext(Hashtable<String, Object> env) {
+		LdapContext ctx = null;
+		try{
+			ctx = new InitialLdapContext(env, null);
+			return ctx;
+		}catch (Exception e) {
+			LdapKit.closeContext(ctx);
+			throw new LdapPluginException(e);
+		}
+	}
+	
 	private DirContext doGetContext() {
 		Hashtable<String, Object> env = setupDirContextEnv();
 	    DirContext ctx = createContext(env);
@@ -104,7 +99,7 @@ public class Config {
 			throw new LdapPluginException(e);
 		}
 	}
-	 
+	
 	protected DirContext doGetContext(String principal, String credentials){
 		Hashtable<String, Object> env = setupSimpleDirContextEnv();
 		env.put(Context.SECURITY_PRINCIPAL, principal);
