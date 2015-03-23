@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jfinal.plugin.ldap.filter;
+package com.jfinal.ext.plugin.ldap.filter;
 
 /**
  * A filter to compare <=. LDAP RFC does not allow < comparison. The following

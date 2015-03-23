@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jfinal.plugin.ldap.filter;
+package com.jfinal.ext.plugin.ldap.filter;
 
 /**
  * A filter that will always evaluate to <code>false</code>, as specified in RFC4526.

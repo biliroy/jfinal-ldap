@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jfinal.plugin.ldap.filter;
+package com.jfinal.ext.plugin.ldap.filter;
 
 /**
  * Convenience class that implements most of the methods in the Filter

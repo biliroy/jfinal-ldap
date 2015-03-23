@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jfinal.plugin.ldap.filter;
+package com.jfinal.ext.plugin.ldap.filter;
 
 
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.jfinal.plugin.ldap.LdapEncoder;
-import com.jfinal.plugin.ldap.support.StringUtils;
+import com.jfinal.ext.plugin.ldap.LdapEncoder;
+import com.jfinal.ext.plugin.ldap.support.StringUtils;
 
 /**
  * This filter automatically converts all whitespace to wildcards (*). The

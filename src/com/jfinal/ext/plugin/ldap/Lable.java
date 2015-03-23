@@ -1,4 +1,4 @@
-package com.jfinal.plugin.ldap;
+package com.jfinal.ext.plugin.ldap;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchResult;
 
-import com.jfinal.plugin.ldap.filter.Filter;
+import com.jfinal.ext.plugin.ldap.filter.Filter;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class Lable<M extends Lable> extends LableAware implements Serializable {

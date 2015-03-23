@@ -1,4 +1,4 @@
-package com.jfinal.plugin.ldap;
+package com.jfinal.ext.plugin.ldap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -332,12 +332,13 @@ public final class LdapKit {
 		return find(baseDN, filter, SearchScope.ONELEVEL.searchControls());
 	}
 	
-	public static boolean authenticate(String base, String filter, String password) {
-		return authenticate(LdapKit.newLdapName(base), filter, password, SearchScope.ONELEVEL.searchControls()).isSuccess();
+	public static boolean authenticate(String base, String filter, String password)throws Exception {
+		return authenticate(LdapKit.newLdapName(base), filter, 
+				password, SearchScope.ONELEVEL.searchControls()).isSuccess();
 	}
 	
 	private static AuthenticationStatus authenticate(Name base,String filter,
-            String password, SearchControls cons){
+            String password, SearchControls cons)throws Exception{
 		List<Entry> result = find(base, filter, null, cons);
 		if (result.size() == 0) {
             String msg = "No results found for search, base: '" + base + "'; filter: '" + filter + "'.";
@@ -437,8 +438,7 @@ public final class LdapKit {
 		                 }
 		             }
 		         }
-		         ctx.setRequestControls(new Control[]{
-		             new PagedResultsControl(pageSize, cookie, Control.CRITICAL)});
+		         ctx.setRequestControls(new Control[]{ new PagedResultsControl(pageSize, cookie, Control.CRITICAL)});
 		         pageResult.put(totalPage, entryList);
 		         totalPage ++;
 		     } while (cookie != null);

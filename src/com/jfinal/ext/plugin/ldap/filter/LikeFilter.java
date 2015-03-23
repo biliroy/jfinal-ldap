@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.jfinal.plugin.ldap.filter;
+package com.jfinal.ext.plugin.ldap.filter;
 
-import com.jfinal.plugin.ldap.LdapEncoder;
+import com.jfinal.ext.plugin.ldap.LdapEncoder;
 
 
 /**

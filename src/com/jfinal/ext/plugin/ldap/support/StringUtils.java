@@ -1,4 +1,4 @@
-package com.jfinal.plugin.ldap.support;
+package com.jfinal.ext.plugin.ldap.support;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,4 +1,4 @@
-package com.jfinal.plugin.ldap.filter;
+package com.jfinal.ext.plugin.ldap.filter;
 
 /**
  * Common interface for LDAP filters.

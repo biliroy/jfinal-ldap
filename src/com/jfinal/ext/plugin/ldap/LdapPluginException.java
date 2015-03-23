@@ -1,4 +1,4 @@
-package com.jfinal.plugin.ldap;
+package com.jfinal.ext.plugin.ldap;
 
 public class LdapPluginException extends RuntimeException{
 
